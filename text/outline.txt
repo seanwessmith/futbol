@@ -1,0 +1,34 @@
+------------------ index.php --------------------------------
+x. CSV
+  x. Add link to dk_csv if new csv.
+  x. Insert / update players
+  x. Insert dk_detail
+
+x. Update statements
+  x. Update players.salary, value, points
+
+x. Build team
+  x. Build team from players , dk_detail, dk_csv
+  x. Select pitching_strength, hitting_strength from team
+-------------------------------------------------------------
+
+------------------ daily_refresh.php ------------------------
+x. Update statements
+  x. update probable players
+  x. update team.opponent
+
+x. Insert Statements
+  x. Insert into pitcher_stats new stats for all players
+
+x. Update Statements
+  x. Update players.total_score, points, value
+  x. Update team pitching_strength, hitting_strength
+-------------------------------------------------------------
+
+------------------ find_unknown.php -------------------------
+x. Select statements
+  x. Selects all from dk_main not in players
+
+x. Insert statements
+  x. Inserts into players; name, espnID
+-------------------------------------------------------------

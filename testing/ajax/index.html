@@ -1,0 +1,36 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<title>AJAX Testing</title>
+</head>
+<body>
+<div class="row">
+          <nav role="navigation" class="nav">
+              <div> HOME </div>
+            <a class="nav_link" href="index.html">
+              <div class="nav_line"></div>PASLAUGOS</a>
+
+            <a class="nav_link" href="services.html">
+              <div class="nav_line"></div>KONTAKTAI</a>
+
+          </nav>
+        </div>
+
+
+        <script>
+    $(document).ready(function(){
+      //page
+      $('.row').on("click",".nav_link",function(e){
+        e.preventDefault(); // cancel click
+
+        var page = $(this).attr('href');
+        $('.row').load(page);
+      });
+
+      $('.nav_link').click(function(){
+        var page = $(this).attr('href');
+        $('.row').load(page);
+        return false;
+      });
+    });
+  </script>

@@ -1,0 +1,24 @@
+The Master Algorithm- Insights
+------------------------------------------
+1.  Run algo to determine best team/ best players
+	a. Add twitter data from team fans, players, coaches.
+	b. Add weather data
+
+2. Explore what are conjunctive concepts.
+
+3. Weighted functions, function only runs once the sum of weighted inputs equals a defined total. (98)
+	a. Perceptron algorithm
+	b. Backpropagation algorithm (108)
+
+4. Bayes' Theorem 
+
+5. Nearest Neighbor (p. 186)
+
+6. Support Vector Machines (p. 190)
+
+Extras:
+(www.coursera.org/course/machlearning - Pedro Domingos
+
+www.coursera.org/course/ml - Andrew Ng’s (Open AI)
+
+http://work.caltech.edu/telecourse.html - Abu-Mostafa
