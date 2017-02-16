@@ -24,7 +24,7 @@ function send_message($startTime, $id, $message, $progress) {
 //CONNECT TO SQL        //
 $mysqli = new mysqli("localhost", "root", "root", "dkings");
 if ($mysqli->connect_errno) {
-    echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+    echo "Failed to connect to MySQL: (".$mysqli->connect_errno.")".$mysqli->connect_error;
 }
 //END SQL CONNECTION   //
 
@@ -82,13 +82,17 @@ if ($espnID[0] !== NULL){
   //Insert Player Name and ESPN ID into players table
   $sql0 = "UPDATE `players` SET espn_id = '$espnID[0]', changed_on = curdate() WHERE player_name = '$name'";
   $mysqli->query($sql0);
+  $rec_count++;
 }
 $y++;
 
 $i++;
 if($i %20 == 0) {
-send_message($startTime, $i, $y . ' of '.$rec_count, round(($y / $rec_count) * 100 ,2).'%');
+  send_message($startTime, $i, $y . ' of '.$rec_count, round(($y / $rec_count) * 100 ,2).'%');
 }
+}
+if ($rec_count == 0) {
+  echo "0 Records to be updated<br>";
 }
 $totalTime = time() - $startTime;
 echo " Total Time Taken: ".$totalTime;

@@ -202,7 +202,7 @@ foreach($dom->getElementsByTagName('a') as $link) {
 */
 
 ////INPUT: SELECT statement that selects players needing updating////
-$sqlSelect = "SELECT * FROM players WHERE player_name = 'Lionel Messi'";
+$sqlSelect = "SELECT * FROM players where refreshed_on = 0";
 /////////////////////////////////////////////////////////////////////
 
 //Grab record count
@@ -220,7 +220,7 @@ $not_in_db   = 0;
 $var         = 0;
 $noTablePlayer = array();
 
-// for ($y = 0; $y < $rec_count;) {
+for ($y = 0; $y < $rec_count;) {
 //Reset PHP script processing time to prevent script ending after 30 seconds//
 set_time_limit(0);
 //////////////////////////////////////////////////////////////////////////////
