@@ -1,17 +1,23 @@
 <html>
 <head>
-  <title>Player Update</title>
+  <title>Player Update2</title>
 </head>
-<?php
-//Send updates while script is running
-header('Content-Type: text/event-stream');
-header('Cache-Control: no-cache');
 
+<style>
+body {
+    background-color: #282C34;
+    /*color: #E06C75;*/ /*RED*/
+    color: #61AFEF;     /*BLUE*/
+}
+</style>
+
+<?php
 //Prevent timing out
 ini_set( 'default_socket_timeout', 120 );
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
 require('simple_html_dom.php');
 
 $startTime = time();
@@ -33,25 +39,35 @@ if ($mysqli->connect_errno) {
     echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
 }
 //// END SQL CONNECTION  ////
-
+/*
 ////Update the probable players for the day////
 //Grab HTML page used to grab probable players from ESPN
-$html = file_get_html('http://espn.go.com/fantasy/baseball/story/_/page/mlb_dailylineups');
-
+$url = "http://www.rotowire.com/soccer/champions-lineups.htm";
 ////Reset all players probability to 0
 $sql0 = "UPDATE players SET probable = 0";
 $res = $mysqli->query($sql0);
 $probable_count = 0;
 
-//Grab pitchers
-$link = array();
-$big_table = $html->find('table[class="inline-table"] thead tr th');
-foreach($big_table as $table) {
-	$sql1 = "UPDATE players SET probable = 1 WHERE player_name = ";
+$ch = curl_init();
+$timeout = 5;
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+$html = curl_exec($ch);
+curl_close($ch);
+
+# Create a DOM parser object
+$dom = new DOMDocument();
+
+# Parse the HTML from Rotowire.
+# The @ before the method call suppresses any warnings that
+# loadHTML might throw because of invalid HTML in the page.
+@$dom->loadHTML($html);
+foreach($dom->getElementsByTagName('a') as $link) {
+  $sql1 = "UPDATE players SET probable = 1 WHERE player_name = ";
   $sql2 = "INSERT INTO probable_player_history (player_name, game_date) VALUES (";
-    $link = $table->find('a');
-    if (isset($link[0])) {
-        $href = $link[0]->innertext;
+    $href = $link->getAttribute('title');
+    if (isset($href) && $href !== '') {
         $sql1 .= "'".$href."'";
         $sql2 .= "'".$href."', curdate()) ON DUPLICATE KEY UPDATE player_name = '".$href."', game_date = curdate()";
         $probable_count++;
@@ -61,65 +77,69 @@ foreach($big_table as $table) {
         $mysqli->query($sql9);
     }
   }
-  ////Grab non-pitchers
-	$link = array();
-	$big_table = $html->find('table[class="inline-table"] tbody tr td');
-	foreach($big_table as $table) {
-		$sql1 = "UPDATE players SET probable = 1 WHERE player_name = ";
-    $sql2 = "INSERT INTO probable_player_history (player_name, game_date) VALUES (";
-	    $link = $table->find('a');
-	    if (isset($link[0])) {
-	        $href = $link[0]->innertext;
-	        $sql1 .= "'".$href."'";
-          $sql2 .= "'".$href."', curdate()) ON DUPLICATE KEY UPDATE player_name = '".$href."', game_date = curdate()";
-	        $probable_count++;
-          $res = $mysqli->query($sql1);
-          $res = $mysqli->query($sql2);
-          $sql9 = "UPDATE `probable_player_history` JOIN players ON probable_player_history.player_name = players.player_name SET probable_player_history.espn_id= players.espn_id";
-          $mysqli->query($sql9);
-	    }
-	  }
 
     ////END update the probable players////
 		send_message($startTime, "DONE", "Updated ".$probable_count." probable players for the day. ", '100%');
     flush();
+*/
     ////Update the team's opponents for the day////
-    $teams = array();
-    $sql0  = "SELECT * FROM team";
-    $res   = $mysqli->query($sql0);
-    $res->data_seek(0);
-      while ($row = $res->fetch_assoc()) {
-        $teams[$row['team_name']] = $row['nickname'];
-      }
-		$sql1  = "UPDATE team SET opponent = NULL";
-		$res   = $mysqli->query($sql1);
-      foreach ($teams as $key => $value) {
-    //Grab HTML page used to grep ESPN number
-    $html = file_get_html('http://espn.go.com/mlb/team/schedule/_/name/'.$value);
+    //Set all teams opponents to NULL
+    $sql1  = "UPDATE team SET opponent = NULL";
+    $res   = $mysqli->query($sql1);
 
-    $link = array();
-    $bigDivs = $html->find('tr');
-    foreach($bigDivs as $div) {
-      $found = NULL;
-      $nobr = $div->find('nobr');
-      if (isset($nobr[0])) {
-        if (strpos($nobr[0], date('M j')) == true) {
-          $found = 1;
+    $url = "http://www.espnfc.us/scores?date=20170216";
+    $ch = curl_init();
+    $timeout = 5;
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+    $html = curl_exec($ch);
+    curl_close($ch);
+    # Create a DOM parser object
+    $dom = new DOMDocument();
+    # Parse the HTML from ESPN.
+    # The @ before the method call suppresses any warnings that
+    # loadHTML might throw because of invalid HTML in the page.
+    @$dom->loadHTML($html);
+
+    foreach($dom->getElementsByTagName('div') as $link) {
+      if ($link->getAttribute('class') == 'team-name')
+      {
+        $parent = $link->parentNode;
+        $team1 = NULL;
+        $team2 = NULL;
+        $count = 0;
+        foreach ( $parent->childNodes as $pp ) {
+          if ($pp->nodeName == 'div') {
+            if (!$team1)
+              $team1 = rtrim(ltrim(preg_replace('/\'/', '', $pp->nodeValue)));
+            else
+              $team2 = rtrim(ltrim(preg_replace('/\'/', '', $pp->nodeValue)));
+          }
+        }
+        $sql1 = "SELECT count(*) AS count FROM team WHERE team_name = '".$team1."'";
+        $res = $mysqli->query($sql1);
+        $res->data_seek(0);
+        if ($res !== NULL) {
+          $row = $res->fetch_assoc();
+          $count = $row['count'];
+        }
+        if ($count == 0)
+        {
+          $sql1 = "INSERT INTO team (team_name) VALUES ('".$team1."')";
+          echo $sql1;
+          $res = $mysqli->query($sql1);
+        }
+        $sql1 = "UPDATE team SET opponent = '".$team2."' WHERE team.team_name = '".$team1."'";
+        $res = $mysqli->query($sql1);
+        $sql1 = "UPDATE team SET opponent = '".$team1."' WHERE team.team_name = '".$team2."'";
+        $res = $mysqli->query($sql1);
         }
       }
-      if ($found == 1) {
-        $list2 = $div->find('li[class=team-name]');
-        $href = $list2[0]->find('a');
-        preg_match('~name/(.*?)/~', $href[0], $opponent);
-        $sql1 = "UPDATE team SET opponent = '".$opponent[1]."' WHERE team.team_name = '$key'";
-        $res = $mysqli->query($sql1);
-    }
-    }
-    }
-
     ////END the teams opponents////
 		send_message($startTime, "DONE", "Updated all teams and opponents for the day. ", '100%');
     flush();
+    /*
     ////Refresh the results table////
     //Grab latest draftkings results csv from the downloads folder//
     $csvLink = "/Users/sean/Downloads/draftkings-contest-entry-history.csv";
@@ -177,9 +197,10 @@ foreach($big_table as $table) {
     send_message($startTime, "DONE", "Updated results table. ", '100%');
     flush();
     ///////////////////////////////////////////////////
+*/
 
 ////INPUT: SELECT statement that selects players needing updating////
-$sqlSelect = "SELECT * FROM players WHERE player_name = 'Robinson Cano'";
+$sqlSelect = "SELECT * FROM players WHERE player_name = 'Lionel Messi'";
 /////////////////////////////////////////////////////////////////////
 
 //Grab record count
@@ -197,25 +218,110 @@ $not_in_db   = 0;
 $var         = 0;
 $noTablePlayer = array();
 
-for ($y = 0; $y < $rec_count;) {
+// for ($y = 0; $y < $rec_count;) {
 //Reset PHP script processing time to prevent script ending after 30 seconds//
 set_time_limit(0);
 //////////////////////////////////////////////////////////////////////////////
 
 //Select one player that needs updating
 $sql0 = $sqlSelect." LIMIT 0,1";
+echo $sql0;
 $res = $mysqli->query($sql0);
 $res->data_seek(0);
 while ($row = $res->fetch_assoc()) {
 $espnID     = $row['espn_id'];
 $playerID = $row['espn_id'];
 }
-$html = file_get_html('http://espn.go.com/mlb/player/gamelog/_/id/'.$espnID.'/year/2016');
+
+$url = "http://www.espnfc.com/player/".$espnID;
+echo "<br>".$url."<br>";
+$ch = curl_init();
+$timeout = 5;
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+$html = curl_exec($ch);
+curl_close($ch);
+# Create a DOM parser object
+$dom = new DOMDocument();
+# Parse the HTML from ESPN.
+# The @ before the method call suppresses any warnings that
+# loadHTML might throw because of invalid HTML in the page.
+@$dom->loadHTML($html);
 
 //    THIS UPDATES PLAYERS STATIC INFO
 //Test to see if page is the standard format needed to grab relevant info//
-$name     = NULL;
+$i        = 0;
 $position = NULL;
+$height   = NULL;
+$weight   = NULL;
+$age      = NULL;
+$dob      = NULL;
+$pob      = NULL;
+/*
+foreach($dom->getElementsByTagName('dd') as $link) {
+  if ($link->nodeValue == 'Defender' || $link->nodeValue == 'Midfielder' || $link->nodeValue == 'Forward' || $link->nodeValue == 'Goalkeeper')
+    $position = $link->nodeValue;
+}
+*/
+foreach($dom->getElementsByTagName('dl') as $col1) {
+  $col1_p = $col1->parentNode;
+  foreach ($col1_p->childNodes as $col1_c) {
+    if ($col1_c->nodeName == 'dl') {
+      $prev = NULL;
+      foreach ($col1_c->childNodes as $row) {
+      if ($prev == 'Position: ' && $i % 2 == 0) {
+        $position = $row->nodeValue;
+      } else if ($prev == 'Height: ' && $i % 2 == 0) {
+        $height = $row->nodeValue;
+      } else if ($prev == 'Weight: ' && $i % 2 == 0) {
+        $weight = $row->nodeValue;
+      } else if ($prev == 'Age: ' && $i % 2 == 0) {
+        $age = $row->nodeValue;
+      } else if ($prev == 'DOB: ' && $i % 2 == 0) {
+        $dob = $row->nodeValue;
+      } else if ($prev == 'POB: ' && $i % 2 == 0) {
+        $pob = $row->nodeValue;
+      }
+      if ($i % 2 == 0) {
+        $prev = $row->nodeValue;
+      }
+      $i++;
+      }
+    }
+  }
+}
+  echo "position = ".$position."<br>";
+  echo "height = ".$height."<br>";
+  echo "weight = ".$weight."<br>";
+  echo "age = ".$age."<br>";
+  echo "dob = ".$dob."<br>";
+  echo "pob = ".$pob."<br>";
+  ////END OF GENERAL INFORMATION////
+
+  ////STARTING GAME INFORMATION////
+  $i = 0;
+  $appear = 0;
+  foreach($dom->getElementsByTagName('tbody') as $tbody) {
+    foreach ($tbody->childNodes as $td) {
+      foreach ($td->childNodes as $field) {
+        if ($appear == 1) {
+          echo $field->nodeValue;
+          $i++;
+        }
+        if ($i % 28 == 0 && $appear == 1) {
+          "<br>";
+        }
+        if ($field->nodeValue == "Appear") {
+          $appear = 1;
+          break ;
+        }
+      }
+      // echo "<br><br><br><br><br><br><br>".$td_ct."<br>";
+    }
+  }
+
+/*
 $generalStats = $html->find('ul.general-info li');
 if ($generalStats != NULL) {
   $pos_num = $generalStats[0];
@@ -596,10 +702,10 @@ $mysqli->query($sql10);
 
 $sql11 = "UPDATE players JOIN (SELECT espn_id, round(sum(total_score)/count(*)) AS points FROM player_stats GROUP BY espn_id) a ON players.espn_id = a.espn_id SET players.points = a.points";
 $mysqli->query($sql11);
-
+*/
 $totalTime = time() - $startTime;
 echo " Total Time Taken: ".$totalTime;
-echo " Total Players updated: ".$updateCount;
-echo " Total Players with new records: ".$newRecords;
+//echo " Total Players updated: ".$updateCount;
+//echo " Total Players with new records: ".$newRecords;
 send_message($startTime,'CLOSE', 'Process complete', '100%');
 ?>

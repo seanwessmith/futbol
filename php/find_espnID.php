@@ -7,7 +7,6 @@ ini_set( 'default_socket_timeout', 120 );
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-require('simple_html_dom.php');
 
 $startTime = time();
 //Send updates while script is running
@@ -54,8 +53,6 @@ $hrefPlayer = strtolower(str_replace(' ', '\-', $unmatchedPlayer));
 //Get player name ready for SQL
 $name = str_replace('\'', '\\\'', $unmatchedPlayer);
 //Grab HTML page used to grep ESPN number
-echo "Player: ".$encodedPlayer."<br>";
-$dom = new DOMDocument;
 $url = "https://www.google.com/search?safe=off&q=".$encodedPlayer."espn+fc&oq=".$encodedPlayer."+espn+fc";
 $ch = curl_init();
 $timeout = 5;
