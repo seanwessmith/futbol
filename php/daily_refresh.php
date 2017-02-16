@@ -202,7 +202,7 @@ foreach($dom->getElementsByTagName('a') as $link) {
 */
 
 ////INPUT: SELECT statement that selects players needing updating////
-$sqlSelect = "SELECT * FROM players where refreshed_on = 0";
+$sqlSelect = "SELECT * FROM players where refreshed_on <> $date";
 /////////////////////////////////////////////////////////////////////
 
 //Grab record count
