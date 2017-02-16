@@ -6,8 +6,10 @@
 <style>
 body {
     background-color: #282C34;
-    /*color: #E06C75;*/ /*RED*/
-    color: #61AFEF;     /*BLUE*/
+    /******* RED ******/
+    /*color: #E06C75;*/
+    /******* BLUE ******/
+    color: #61AFEF;
 }
 </style>
 
@@ -300,24 +302,91 @@ foreach($dom->getElementsByTagName('dl') as $col1) {
   ////END OF GENERAL INFORMATION////
 
   ////STARTING GAME INFORMATION////
+  //VARIABLES TO NAVIGATE HTML TABLE//
   $i = 0;
   $appear = 0;
+  //VARIABLES TO SAVE SQL INFORMATION//
+  $team = NULL;
+  $game_date = NULL;
+  $opponent = NULL;
+  $win_result = 0;
+  $competition = NULL;
+  $score_result = 0;
+  $appear = NULL;
+  $goals = 0;
+  $assists = 0;
+  $shots = 0;
+  $shots_on_goal = 0;
+  $fouls_commited = 0;
+  $fouls_suffered = 0;
+  $yellow_cards = 0;
+  $red_cards = 0;
+
   foreach($dom->getElementsByTagName('tbody') as $tbody) {
     foreach ($tbody->childNodes as $td) {
       foreach ($td->childNodes as $field) {
         if ($appear == 1) {
-          echo $field->nodeValue;
-          $i++;
+          if ($field->nodeValue != '' && $field->nodeValue != NULL && !strpos(json_encode($field->nodeValue), '\n')) {
+            if ($team == NULL) {
+              $team = $field->nodeValue;
+            } elseif ($opponent == NULL) {
+              $opponent = $field->nodeValue;
+            } elseif ($game_date == NULL) {
+              $game_date = $field->nodeValue;
+            } elseif ($competition == 0) {
+              $competition = $field->nodeValue;
+            } elseif ($win_result == NULL) {
+              $win_result = $field->nodeValue;
+            } elseif ($appear == NULL) {
+              $appear = $field->nodeValue;
+            } elseif ($goals == NULL) {
+              $goals = $field->nodeValue;
+            } elseif ($assists == NULL) {
+              $assists = $field->nodeValue;
+            } elseif ($shots == NULL) {
+              $shots = $field->nodeValue;
+            } elseif ($shots_on_goal == NULL) {
+              $shots_on_goal = $field->nodeValue;
+            } elseif ($fouls_commited == NULL) {
+              $fouls_commited = $field->nodeValue;
+            } elseif ($fouls_suffered == NULL) {
+              $fouls_suffered = $field->nodeValue;
+            } elseif ($yellow_cards == NULL) {
+              $yellow_cards = $field->nodeValue;
+            } elseif ($red_cards == NULL) {
+              $red_cards = $field->nodeValue;
+            }
+            $i++;
+          }
         }
-        if ($i % 28 == 0 && $appear == 1) {
-          "<br>";
+        if ($i % 14 == 0 && $appear == 1) {
+          $sql3 = "INSERT INTO `player_stats`(`espn_id`,`game_date`, `opponent`, `win_result`, `competition`, `score_result`,
+                  `appear`, `goals`, `assists`, `shots`, `shots_on_goal`, `fouls_commited`, `fouls_suffered`, `yellow_cards`, `red_cards`, `added_on`)
+                  VALUES ('".$espnID."','".$team."','".$opponent."','".$game_date."','".$win_result."','".$competition."','".$score_result."',
+                  '".$appear."','".$goals."','".$assists."','".$shots."','".$shots_on_goal."','".$fouls_commited."','".$fouls_suffered."',
+                  '".$yellow_cards."','".$red_cards."')";
+          $res = $mysqli->query($sql3);
+          $team = NULL;
+          $game_date = NULL;
+          $opponent = NULL;
+          $win_result = 0;
+          $competition = NULL;
+          $score_result = 0;
+          $appear = NULL;
+          $goals = 0;
+          $assists = 0;
+          $shots = 0;
+          $shots_on_goal = 0;
+          $fouls_commited = 0;
+          $fouls_suffered = 0;
+          $yellow_cards = 0;
+          $red_cards = 0;
         }
         if ($field->nodeValue == "Appear") {
           $appear = 1;
           break ;
         }
       }
-      // echo "<br><br><br><br><br><br><br>".$td_ct."<br>";
     }
   }
 
