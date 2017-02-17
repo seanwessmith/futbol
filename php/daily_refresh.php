@@ -41,7 +41,7 @@ if ($mysqli->connect_errno) {
     echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
 }
 //// END SQL CONNECTION  ////
-/*
+
 ////Update the probable players for the day////
 //Grab HTML page used to grab probable players from ESPN
 $url = "http://www.rotowire.com/soccer/champions-lineups.htm";
@@ -83,13 +83,13 @@ foreach($dom->getElementsByTagName('a') as $link) {
     ////END update the probable players////
 		send_message($startTime, "DONE", "Updated ".$probable_count." probable players for the day. ", '100%');
     flush();
-*/
+
     ////Update the team's opponents for the day////
     //Set all teams opponents to NULL
     $sql1  = "UPDATE team SET opponent = NULL";
     $res   = $mysqli->query($sql1);
 
-    $url = "http://www.espnfc.us/scores?date=20170216";
+    $url = "http://www.espnfc.us/scores?date=20170217";
     $ch = curl_init();
     $timeout = 5;
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -105,8 +105,7 @@ foreach($dom->getElementsByTagName('a') as $link) {
     @$dom->loadHTML($html);
 
     foreach($dom->getElementsByTagName('div') as $link) {
-      if ($link->getAttribute('class') == 'team-name')
-      {
+      if ($link->getAttribute('class') == 'team-name') {
         $parent = $link->parentNode;
         $team1 = NULL;
         $team2 = NULL;
@@ -129,7 +128,6 @@ foreach($dom->getElementsByTagName('a') as $link) {
         if ($count == 0)
         {
           $sql1 = "INSERT INTO team (team_name) VALUES ('".$team1."')";
-          echo $sql1;
           $res = $mysqli->query($sql1);
         }
         $sql1 = "UPDATE team SET opponent = '".$team2."' WHERE team.team_name = '".$team1."'";
@@ -141,68 +139,11 @@ foreach($dom->getElementsByTagName('a') as $link) {
     ////END the teams opponents////
 		send_message($startTime, "DONE", "Updated all teams and opponents for the day. ", '100%');
     flush();
-    /*
-    ////Refresh the results table////
-    //Grab latest draftkings results csv from the downloads folder//
-    $csvLink = "/Users/sean/Downloads/draftkings-contest-entry-history.csv";
-    ///////////////////////////////////////////////
-
-    $viewName   = NULL;
-    $csv_link   = NULL;
-    $oldCSVLink = NULL;
-    $new_csv    = 0;
-    $csvData    = NULL;
-    $lines      = NULL;
-    $csvArray   = array();
-
-    ////Download new CSV and Parse into players////
-    $csvData = file_get_contents($csvLink);
-    $lines = explode(PHP_EOL, $csvData);
-    $array = array();
-    foreach ($lines as $line) {
-        $csvArray[] = str_getcsv($line);
-    }
-    unset($csvArray[0]);
-    array_pop($csvArray);
-
-    $sql2 = "INSERT INTO `results`(`entry_type`, `entry_date`, `placed`, `entries`, `points`, `places_paid`) VALUES ";
-    $i = 0;
-    foreach ($csvArray as $array){
-      if ($array[0] == 'MLB') {
-    	$entry_type  = str_replace("'","''", $array[1]);
-    	$entry_date  = str_replace("'","''", $array[2]);
-    	$placed      = str_replace("'","''", $array[3]);
-      $entries     = str_replace("'","''", $array[7]);
-      $points      = str_replace("'","''", $array[4]);
-      $places_paid = str_replace("'","''", $array[10]);
-      $sql3 = "SELECT count(*) as rec_count FROM results WHERE entry_type = ".$entry_type." AND entry_date = ".$entry_date." AND placed = ";
-    	if ($i == 0) {
-    		$sql2 .= "('".$entry_type."','".$entry_date."','".$placed."', '".$entries."', '".$points."', '".$places_paid."')";
-
-    	} else {
-        $sql2 .= ", ('".$entry_type."','".$entry_date."','".$placed."', '".$entries."', '".$points."', '".$places_paid."')";
-    	}
-    	$i++;
-    }
-    //PHP string can only handle < 100 records, this inserts into SQL in steps
-    if ($i == 80) {
-      $sql2 .= " ON DUPLICATE KEY UPDATE `changed_on` = curdate();";
-      $mysqli->query($sql2);
-      $sql2 = "INSERT INTO `results`(`entry_type`, `entry_date`, `placed`, `entries`, `points`, `places_paid`) VALUES ";
-      $i = 0;
-    }
-    }
-    $sql2 .= " ON DUPLICATE KEY UPDATE `changed_on` = curdate();";
-    $mysqli->query($sql2);
-    $sql2 = "INSERT INTO `results`(`entry_type`, `entry_date`, `placed`, `entries`, `points`, `places_paid`) VALUES ";
-
-    send_message($startTime, "DONE", "Updated results table. ", '100%');
-    flush();
-    ///////////////////////////////////////////////////
-*/
 
 ////INPUT: SELECT statement that selects players needing updating////
-$sqlSelect = "SELECT * FROM players where refreshed_on <> $date";
+$mysqltime = date ("Y-m-d H:i:s", time());
+// $sqlSelect = "SELECT * FROM players WHERE espn_id = 87703";
+$sqlSelect = "SELECT * FROM players where refreshed_on <> '".$mysqltime."'";
 /////////////////////////////////////////////////////////////////////
 
 //Grab record count
@@ -210,7 +151,7 @@ $sql0 = "SELECT count(*) AS rec_count FROM ($sqlSelect) a";
 $res = $mysqli->query($sql0);
 $res->data_seek(0);
 while ($row = $res->fetch_assoc()) {
-$rec_count = $row['rec_count'];
+  $rec_count = $row['rec_count'];
 }
 $step        = 0;
 $updateCount = 0;
@@ -260,12 +201,7 @@ $weight   = NULL;
 $age      = NULL;
 $dob      = NULL;
 $pob      = NULL;
-/*
-foreach($dom->getElementsByTagName('dd') as $link) {
-  if ($link->nodeValue == 'Defender' || $link->nodeValue == 'Midfielder' || $link->nodeValue == 'Forward' || $link->nodeValue == 'Goalkeeper')
-    $position = $link->nodeValue;
-}
-*/
+
 foreach($dom->getElementsByTagName('dl') as $col1) {
   $col1_p = $col1->parentNode;
   foreach ($col1_p->childNodes as $col1_c) {
@@ -305,22 +241,25 @@ foreach($dom->getElementsByTagName('dl') as $col1) {
   //VARIABLES TO NAVIGATE HTML TABLE//
   $i = 0;
   $appear = 0;
+  $updateCount = 0;
   //VARIABLES TO SAVE SQL INFORMATION//
-  $team = NULL;
-  $game_date = NULL;
-  $opponent = NULL;
-  $win_result = 0;
-  $competition = NULL;
-  $score_result = 0;
-  $appear = NULL;
-  $goals = 0;
-  $assists = 0;
-  $shots = 0;
-  $shots_on_goal = 0;
-  $fouls_commited = 0;
-  $fouls_suffered = 0;
-  $yellow_cards = 0;
-  $red_cards = 0;
+  $team           = NULL;
+  $game_date      = NULL;
+  $opponent       = NULL;
+  $win_result     = NULL;
+  $competition    = NULL;
+  $score_result   = NULL;
+  $appear         = NULL;
+  $appearance     = NULL;
+  $saves          = NULL;
+  $goals          = NULL;
+  $assists        = NULL;
+  $shots          = NULL;
+  $shots_on_goal  = NULL;
+  $fouls_commited = NULL;
+  $fouls_suffered = NULL;
+  $yellow_cards   = NULL;
+  $red_cards      = NULL;
 
   foreach($dom->getElementsByTagName('tbody') as $tbody) {
     foreach ($tbody->childNodes as $td) {
@@ -333,63 +272,105 @@ foreach($dom->getElementsByTagName('dl') as $col1) {
               $opponent = $field->nodeValue;
             } elseif ($game_date == NULL) {
               $game_date = $field->nodeValue;
-            } elseif ($competition == 0) {
+            } elseif ($competition == NULL) {
               $competition = $field->nodeValue;
-            } elseif ($win_result == NULL) {
+            } elseif ($win_result === NULL) {
               $win_result = $field->nodeValue;
-            } elseif ($appear == NULL) {
-              $appear = $field->nodeValue;
-            } elseif ($goals == NULL) {
+            } elseif ($appearance === NULL) {
+              $appearance = $field->nodeValue;
+            } elseif ($goals === NULL && $appearance !== "Unused Substitute" && $position !== "Goalkeeper") {
               $goals = $field->nodeValue;
-            } elseif ($assists == NULL) {
+            } elseif ($assists === NULL && $appearance !== "Unused Substitute" && $position !== "Goalkeeper") {
               $assists = $field->nodeValue;
-            } elseif ($shots == NULL) {
+            } elseif ($shots === NULL && $appearance !== "Unused Substitute" && $position !== "Goalkeeper") {
               $shots = $field->nodeValue;
-            } elseif ($shots_on_goal == NULL) {
+            } elseif ($shots_on_goal === NULL && $appearance !== "Unused Substitute" && $position !== "Goalkeeper") {
               $shots_on_goal = $field->nodeValue;
-            } elseif ($fouls_commited == NULL) {
+            } elseif ($saves === NULL && $appearance !== "Unused Substitute" && $position == "Goalkeeper") {
+              $saves = $field->nodeValue;
+            } elseif ($fouls_commited === NULL && $appearance !== "Unused Substitute") {
               $fouls_commited = $field->nodeValue;
-            } elseif ($fouls_suffered == NULL) {
+            } elseif ($fouls_suffered === NULL && $appearance !== "Unused Substitute") {
               $fouls_suffered = $field->nodeValue;
-            } elseif ($yellow_cards == NULL) {
+            } elseif ($yellow_cards === NULL && $appearance !== "Unused Substitute") {
               $yellow_cards = $field->nodeValue;
-            } elseif ($red_cards == NULL) {
+            } elseif ($red_cards === NULL && $appearance !== "Unused Substitute") {
               $red_cards = $field->nodeValue;
             }
             $i++;
           }
+          if ($red_cards != NULL || $appearance == "Unused Substitute") {
+            $game_date = date("Y-m-d", strtotime($game_date));
+            $sql4 = "SELECT count(*) AS found FROM `player_stats` WHERE espn_id = '".$espnID."' AND `game_date` = '".$game_date."'";
+            $res = $mysqli->query($sql4);
+            $res->data_seek(0);
+            while ($row = $res->fetch_assoc()) {
+              $found = $row['found'];
+            }
+            if ($position === "Goalkeeper") {
+              $sql3 = "INSERT INTO `player_stats`(`espn_id`,`team`,`opponent`, `game_date`, `win_result`, `competition`,
+                `appearance`, `saves`, `fouls_commited`, `fouls_suffered`, `yellow_cards`, `red_cards`, `added_on`)
+                VALUES ('".$espnID."','".$team."','".$opponent."','".$game_date."','".$win_result."','".$competition."',
+                '".$appearance."','".$saves."','".$fouls_commited."','".$fouls_suffered."',
+                '".$yellow_cards."','".$red_cards."','".$mysqltime."')";
+            } elseif ($position !== NULL) {
+              $sql3 = "INSERT INTO `player_stats`(`espn_id`,`team`,`opponent`, `game_date`, `win_result`, `competition`,
+              `appearance`, `goals`, `assists`, `shots`, `shots_on_goal`, `fouls_commited`, `fouls_suffered`, `yellow_cards`, `red_cards`, `added_on`)
+              VALUES ('".$espnID."','".$team."','".$opponent."','".$game_date."','".$win_result."','".$competition."',
+              '".$appearance."','".$goals."','".$assists."','".$shots."','".$shots_on_goal."','".$fouls_commited."','".$fouls_suffered."',
+              '".$yellow_cards."','".$red_cards."','".$mysqltime."')";
+            }
+            // echo $sql3."<br>";
+            // echo "<br>";
+            // echo "team ".$team."<br>";
+            // echo "game_date ".$game_date."<br>";
+            // echo "opponent ".$opponent."<br>";
+            // echo "win ".$win_result."<br>";
+            // echo "competition ".$competition."<br>";
+            // echo "appearance ".$appearance."<br>";
+            // echo "saves ".$saves."<br>";
+            // echo "goals ".$goals."<br>";
+            // echo "assists ".$assists."<br>";
+            // echo "shots ".$shots."<br>";
+            // echo "shots_on_goal ".$shots_on_goal."<br>";
+            // echo "fouls_commited ".$fouls_commited."<br>";
+            // echo "fouls_suffered ".$fouls_suffered."<br>";
+            // echo "yellow_cards ".$yellow_cards."<br>";
+            // echo "red_cards ".$red_cards."<br>";
+            // echo "<br>";
+            if ($found == 0) {
+              $res = $mysqli->query($sql3);
+            }
+            $found          = 0;
+            $team           = NULL;
+            $game_date      = NULL;
+            $opponent       = NULL;
+            $win_result     = NULL;
+            $competition    = NULL;
+            $appearance     = NULL;
+            $saves          = NULL;
+            $goals          = NULL;
+            $assists        = NULL;
+            $shots          = NULL;
+            $shots_on_goal  = NULL;
+            $fouls_commited = NULL;
+            $fouls_suffered = NULL;
+            $yellow_cards   = NULL;
+            $red_cards      = NULL;
+          }
         }
-        if ($i % 14 == 0 && $appear == 1) {
-          $sql3 = "INSERT INTO `player_stats`(`espn_id`,`game_date`, `opponent`, `win_result`, `competition`, `score_result`,
-                  `appear`, `goals`, `assists`, `shots`, `shots_on_goal`, `fouls_commited`, `fouls_suffered`, `yellow_cards`, `red_cards`, `added_on`)
-                  VALUES ('".$espnID."','".$team."','".$opponent."','".$game_date."','".$win_result."','".$competition."','".$score_result."',
-                  '".$appear."','".$goals."','".$assists."','".$shots."','".$shots_on_goal."','".$fouls_commited."','".$fouls_suffered."',
-                  '".$yellow_cards."','".$red_cards."')";
-          $res = $mysqli->query($sql3);
-          $team = NULL;
-          $game_date = NULL;
-          $opponent = NULL;
-          $win_result = 0;
-          $competition = NULL;
-          $score_result = 0;
-          $appear = NULL;
-          $goals = 0;
-          $assists = 0;
-          $shots = 0;
-          $shots_on_goal = 0;
-          $fouls_commited = 0;
-          $fouls_suffered = 0;
-          $yellow_cards = 0;
-          $red_cards = 0;
-        }
-        if ($field->nodeValue == "Appear") {
+        if ($field->nodeValue == "Appear" && $appear == 0) {
           $appear = 1;
           break ;
         }
       }
     }
   }
-
+  $sql4 = "UPDATE `players` SET refreshed_on = '".$mysqltime."' WHERE espn_id = '".$espnID."'";
+  $res = $mysqli->query($sql4);
+  $updateCount++;
+  $y++;
+}
 /*
 $generalStats = $html->find('ul.general-info li');
 if ($generalStats != NULL) {
@@ -774,7 +755,7 @@ $mysqli->query($sql11);
 */
 $totalTime = time() - $startTime;
 echo " Total Time Taken: ".$totalTime;
-//echo " Total Players updated: ".$updateCount;
+echo " Total Players updated: ".$updateCount;
 //echo " Total Players with new records: ".$newRecords;
 send_message($startTime,'CLOSE', 'Process complete', '100%');
 ?>
