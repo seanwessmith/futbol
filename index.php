@@ -17,12 +17,9 @@
 	        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 	        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 	    <![endif]-->
-	<title>Fantasy Baseball Quant</title>
-	<style>
-</style>
+	<title>Fantasy Futbol Quant</title>
 </head>
 <body>
-
 <?php
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -116,8 +113,7 @@ foreach ($csvArray as $key => &$array){
 		  while ($row = $res->fetch_assoc()) {
 		    $array[] = $row['espn_id'];
 		  }
-    } else {
-		}
+    }
 }
 
 ////Insert records into the dk_stats table if there is a new CSV
@@ -148,17 +144,19 @@ $mysqli->query($sql4);
 
 ////Update players.salary
 $sql8 = "UPDATE players JOIN (SELECT salary, dk_stats.espn_id FROM dk_stats, (SELECT max(added_on) AS added_on, espn_id FROM dk_stats GROUP BY espn_id) a WHERE a.espn_id = dk_stats.espn_id AND a.added_on = dk_stats.added_on) a ON a.espn_id = players.espn_id SET players.salary = a.salary";
-$mysqli->query($sql8);
+echo $sql8."<br>";
+//$mysqli->query($sql8);
 ////Update players.points
 // $sql12 = "UPDATE players JOIN (SELECT a.espn_id, (a.points + b.one_week_score)/2 AS calc_score FROM (SELECT espn_id, round(sum(total_score)/count(*)) AS points FROM player_stats GROUP BY espn_id) a, (SELECT espn_id, round(SUM(total_score)/count(*), 2) AS one_week_score FROM player_stats WHERE game_date >= curdate() - 7
 //           GROUP BY espn_id) b WHERE a.espn_id = b.espn_id) c ON players.espn_id = c.espn_id SET players.points = c.calc_score";
 //ORIGINAL//
 $sql12 = "UPDATE players JOIN (SELECT espn_id, round(sum(total_score)/count(*)) AS points FROM player_stats GROUP BY espn_id) a ON players.espn_id = a.espn_id SET players.points = a.points";
-////////////
-$mysqli->query($sql12);
+echo $sql12."<br>";
+//$mysqli->query($sql12);
 ////Update players.value
 $sql11 = "UPDATE players JOIN (SELECT espn_id, round(sum(total_score)/count(*)) AS points FROM player_stats GROUP BY espn_id) a ON players.espn_id = a.espn_id SET players.value = (a.points/players.salary*100000)";
-$mysqli->query($sql11);
+echo $sql11."<br>";
+//$mysqli->query($sql11);
 ?>
 
 <!-- Navigation Bar -->
@@ -187,9 +185,10 @@ $mysqli->query($sql11);
 <div class="container-fluid" id="content">
 <div class="row padme">
   <div id="box1" class="col-md-6 box center">
-    <h1>Fantasy Baseball Quant</h1>
+    <h1>Fantasy Futbol Quant</h1>
 		<form class="form-inline" method="POST">
 			<?php
+/*
 	      if($_SERVER['REQUEST_METHOD'] == "POST"){
 					echo 'yes';
 		  //Set sal_cap
@@ -203,7 +202,7 @@ $mysqli->query($sql11);
 					echo 'true';
 			}else{
 				echo 'no';
-				?>
+	*/ 			?>
 			<script>
 				//Post id=salary_cap value from textbox
 				///////Grab Salary Cap///////
@@ -240,6 +239,7 @@ $mysqli->query($sql11);
 
 <!-- Grab information from database to build team-->
 	<?php
+	/*
   //Set hard values, sal_cap and set tot_sal to 0
 	$sal_cap   = 50000;
 	$tot_sal   = 0;
@@ -687,5 +687,7 @@ $( "#dd_qb" ).click(function() {
 $("#btnAddProfile").html('G <span class="caret"></span></button>');
 });
 </script>
+*/
+?>
 </body>
 </html>
